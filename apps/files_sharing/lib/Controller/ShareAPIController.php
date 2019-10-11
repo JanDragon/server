@@ -798,7 +798,6 @@ class ShareAPIController extends OCSController {
 	 * returns all shares relative to a file, including parent folders shares rights.
 	 *
 	 * @NoAdminRequired
-	 * @NoCSRFRequired
 	 *
 	 * @param string $path
 	 *
