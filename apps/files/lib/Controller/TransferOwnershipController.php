@@ -24,13 +24,15 @@ declare(strict_types=1);
 
 namespace OCA\Files\Controller;
 
-use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http\JSONResponse;
+use OCA\Files\BackgroundJob\TransferOwnership;
+use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\OCSController;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\BackgroundJob\IJobList;
 use OCP\IRequest;
 use OCP\Notification\IManager as NotificationManager;
 
-class TransferOwnershipController extends Controller {
+class TransferOwnershipController extends OCSController {
 
 	/** @var string */
 	private $userId;
@@ -38,17 +40,21 @@ class TransferOwnershipController extends Controller {
 	private $notificationManager;
 	/** @var ITimeFactory */
 	private $timeFactory;
+	/** @var IJobList */
+	private $jobList;
 
 	public function __construct(string $appName,
 								IRequest $request,
 								string $userId,
 								NotificationManager $notificationManager,
-								ITimeFactory $timeFactory) {
+								ITimeFactory $timeFactory,
+								IJobList $jobList) {
 		parent::__construct($appName, $request);
 
 		$this->userId = $userId;
 		$this->notificationManager = $notificationManager;
 		$this->timeFactory = $timeFactory;
+		$this->jobList = $jobList;
 	}
 
 
@@ -57,7 +63,7 @@ class TransferOwnershipController extends Controller {
 	 *
 	 * TODO: more checks
 	 */
-	public function transfer(string $recipient, string $path) {
+	public function transfer(string $recipient, string $path): DataResponse {
 		$notification = $this->notificationManager->createNotification();
 
 		$notification->setUser($recipient)
@@ -72,6 +78,28 @@ class TransferOwnershipController extends Controller {
 
 		$this->notificationManager->notify($notification);
 
-		return new JSONResponse([]);
+		return new DataResponse([]);
 	}
+
+	/**
+	 * @NoAdminRequired
+	 */
+	public function accept(string $params): DataResponse {
+		$data = json_decode(base64_decode($params), true);
+
+		// TODO: Mark notification as done
+		$this->jobList->add(TransferOwnership::class, [
+			'source-user' => $data['sourceUser'],
+			'destination-user' => $data['targetUser'],
+			'path' => $data['path'],
+		]);
+	}
+
+	public function reject(string $params): DataResponse {
+		$data = json_decode(base64_decode($params), true);
+
+		// TODO: Mark notification as done
+		// TODO: Send notification to initiator of rejection
+	}
+
 }

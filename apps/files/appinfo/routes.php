@@ -92,12 +92,24 @@ $application->registerRoutes(
 				'url' => '/api/v1/quickaccess/get/NodeType',
 				'verb' => 'GET',
 			],
+		],
+		'ocs' => [
 			[
 				'name' => 'TransferOwnership#transfer',
 				'url' => '/api/v1/transferownership',
+				'verb' => 'PUT',
+			],
+			[
+				'name' => 'TransferOwnership#accept',
+				'url' => '/api/v1/transferownership/{params}',
 				'verb' => 'POST',
 			],
-		]
+			[
+				'name' => 'TransferOwnership#reject',
+				'url' => '/api/v1/transferownership/{params}',
+				'verb' => 'DELETE',
+			],
+		],
 	]
 );
 
