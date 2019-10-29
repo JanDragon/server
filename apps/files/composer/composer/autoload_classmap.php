@@ -22,6 +22,7 @@ return array(
     'OCA\\Files\\BackgroundJob\\CleanupFileLocks' => $baseDir . '/../lib/BackgroundJob/CleanupFileLocks.php',
     'OCA\\Files\\BackgroundJob\\DeleteOrphanedItems' => $baseDir . '/../lib/BackgroundJob/DeleteOrphanedItems.php',
     'OCA\\Files\\BackgroundJob\\ScanFiles' => $baseDir . '/../lib/BackgroundJob/ScanFiles.php',
+    'OCA\\Files\\BackgroundJob\\TransferOwnership' => $baseDir . '/../lib/BackgroundJob/TransferOwnership.php',
     'OCA\\Files\\Capabilities' => $baseDir . '/../lib/Capabilities.php',
     'OCA\\Files\\Collaboration\\Resources\\Listener' => $baseDir . '/../lib/Collaboration/Resources/Listener.php',
     'OCA\\Files\\Collaboration\\Resources\\ResourceProvider' => $baseDir . '/../lib/Collaboration/Resources/ResourceProvider.php',
