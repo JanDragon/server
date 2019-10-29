@@ -94,6 +94,7 @@ class TransferOwnership extends QueuedJob {
 	protected function run($argument) {
 		$this->sourceUser = $argument['source-user'];
 		$this->destinationUser = $argument['destination-user'];
+		$path = $argument['path'];
 		$sourceUserObject = $this->userManager->get($this->sourceUser);
 		$destinationUserObject = $this->userManager->get($this->destinationUser);
 
@@ -109,7 +110,8 @@ class TransferOwnership extends QueuedJob {
 			return 1;
 		}
 
-		$this->sourcePath = rtrim($this->sourceUser . '/files/');
+		$sourcePathOption = ltrim($path, '/');
+		$this->sourcePath = rtrim($this->sourceUser . '/files/' . $sourcePathOption, '/');
 
 		// target user has to be ready
 		if (!$this->encryptionManager->isReadyForUser($this->destinationUser)) {
@@ -127,7 +129,7 @@ class TransferOwnership extends QueuedJob {
 
 		$view = new View();
 		if (!$view->is_dir($this->sourcePath)) {
-			$this->logger->alert("<error>Unknown path provided: $this->sourcePath</error>");
+			$this->logger->alert("Unknown path provided: $sourcePathOption");
 			//TODO send notification
 			return 1;
 		}
