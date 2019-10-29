@@ -32,6 +32,7 @@ return array(
     'OCA\\Files\\Command\\TransferOwnership' => $baseDir . '/../lib/Command/TransferOwnership.php',
     'OCA\\Files\\Controller\\AjaxController' => $baseDir . '/../lib/Controller/AjaxController.php',
     'OCA\\Files\\Controller\\ApiController' => $baseDir . '/../lib/Controller/ApiController.php',
+    'OCA\\Files\\Controller\\TransferOwnershipController' => $baseDir . '/../lib/Controller/TransferOwnershipController.php',
     'OCA\\Files\\Controller\\ViewController' => $baseDir . '/../lib/Controller/ViewController.php',
     'OCA\\Files\\Event\\LoadAdditionalScriptsEvent' => $baseDir . '/../lib/Event/LoadAdditionalScriptsEvent.php',
     'OCA\\Files\\Event\\LoadSidebar' => $baseDir . '/../lib/Event/LoadSidebar.php',
