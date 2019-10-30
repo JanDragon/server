@@ -1449,13 +1449,15 @@ class ShareAPIController extends OCSController {
 	 * @return bool
 	 */
 	private function hasResharingRights($viewer, $node): bool {
-		$shares = $this->getSharesFromNode($viewer, $node, true);
-		foreach ($shares as $share) {
-			try {
-				if ($this->shareProviderResharingRights($viewer, $share, $node)) {
-					return true;
+		foreach ([$node, $node->getParent()] as $node) {
+			$shares = $this->getSharesFromNode($viewer, $node, true);
+			foreach ($shares as $share) {
+				try {
+					if ($this->shareProviderResharingRights($viewer, $share, $node)) {
+						return true;
+					}
+				} catch (InvalidPathException | NotFoundException $e) {
 				}
-			} catch (InvalidPathException | NotFoundException $e) {
 			}
 		}
 
