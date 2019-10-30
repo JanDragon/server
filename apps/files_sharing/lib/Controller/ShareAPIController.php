@@ -794,7 +794,7 @@ class ShareAPIController extends OCSController {
 
 
 	/**
-	 * The getSharesComlete function.
+	 * The getInheritedShares function.
 	 * returns all shares relative to a file, including parent folders shares rights.
 	 *
 	 * @NoAdminRequired
