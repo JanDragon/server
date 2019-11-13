@@ -97,16 +97,16 @@ $application->registerRoutes(
 			[
 				'name' => 'TransferOwnership#transfer',
 				'url' => '/api/v1/transferownership',
-				'verb' => 'PUT',
+				'verb' => 'POST',
 			],
 			[
 				'name' => 'TransferOwnership#accept',
-				'url' => '/api/v1/transferownership/{params}',
+				'url' => '/api/v1/transferownership/{id}',
 				'verb' => 'POST',
 			],
 			[
 				'name' => 'TransferOwnership#reject',
-				'url' => '/api/v1/transferownership/{params}',
+				'url' => '/api/v1/transferownership/{id}',
 				'verb' => 'DELETE',
 			],
 		],

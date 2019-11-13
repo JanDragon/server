@@ -25,6 +25,9 @@ declare(strict_types=1);
 namespace OCA\Files\Controller;
 
 use OCA\Files\BackgroundJob\TransferOwnership;
+use OCA\Files\Db\TransferOwnershipMapper;
+use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -42,19 +45,23 @@ class TransferOwnershipController extends OCSController {
 	private $timeFactory;
 	/** @var IJobList */
 	private $jobList;
+	/** @var TransferOwnershipMapper */
+	private $mapper;
 
 	public function __construct(string $appName,
 								IRequest $request,
 								string $userId,
 								NotificationManager $notificationManager,
 								ITimeFactory $timeFactory,
-								IJobList $jobList) {
+								IJobList $jobList,
+								TransferOwnershipMapper $mapper) {
 		parent::__construct($appName, $request);
 
 		$this->userId = $userId;
 		$this->notificationManager = $notificationManager;
 		$this->timeFactory = $timeFactory;
 		$this->jobList = $jobList;
+		$this->mapper = $mapper;
 	}
 
 
@@ -64,8 +71,17 @@ class TransferOwnershipController extends OCSController {
 	 * TODO: more checks
 	 */
 	public function transfer(string $recipient, string $path): DataResponse {
-		$notification = $this->notificationManager->createNotification();
 
+		//TODO: verify if recipient exists
+		//TODO: verify if path exists
+
+		$transferOwnership = new \OCA\Files\Db\TransferOwnership();
+		$transferOwnership->setSourceUser($this->userId);
+		$transferOwnership->setTargetUser($recipient);
+		$transferOwnership->setPath($path);
+		$transferOwnership = $this->mapper->insert($transferOwnership);
+
+		$notification = $this->notificationManager->createNotification();
 		$notification->setUser($recipient)
 			->setApp('files')
 			->setDateTime($this->timeFactory->getDateTime())
@@ -74,7 +90,7 @@ class TransferOwnershipController extends OCSController {
 				'targetUser' => $recipient,
 				'path' => $path
 			])
-			->setObject('transfer', $this->userId . '::' . $path);
+			->setObject('transfer', (string)$transferOwnership->getId());
 
 		$this->notificationManager->notify($notification);
 
@@ -84,20 +100,34 @@ class TransferOwnershipController extends OCSController {
 	/**
 	 * @NoAdminRequired
 	 */
-	public function accept(string $params): DataResponse {
-		$data = json_decode(base64_decode($params), true);
+	public function accept(string $id): DataResponse {
+		$transferId = (int)$id;
 
-		// TODO: Mark notification as done
+		try {
+			$transferOwnership = $this->mapper->getById($transferId);
+		} catch (DoesNotExistException $e) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
+
+		if ($transferOwnership->getTargetUser() !== $this->userId) {
+			return new DataResponse([], Http::STATUS_FORBIDDEN);
+		}
+
 		$this->jobList->add(TransferOwnership::class, [
-			'source-user' => $data['sourceUser'],
-			'destination-user' => $data['targetUser'],
-			'path' => $data['path'],
+			'source-user' => $transferOwnership->getSourceUser(),
+			'destination-user' => $transferOwnership->getTargetUser(),
+			'path' => $transferOwnership->getPath(),
 		]);
+
+		$notification = $this->notificationManager->createNotification();
+		$notification->setApp('files')
+			->setObject('transfer', $id);
+		$this->notificationManager->markProcessed($notification);
+
+		return new DataResponse([], Http::STATUS_OK);
 	}
 
-	public function reject(string $params): DataResponse {
-		$data = json_decode(base64_decode($params), true);
-
+	public function reject(string $id): DataResponse {
 		// TODO: Mark notification as done
 		// TODO: Send notification to initiator of rejection
 	}

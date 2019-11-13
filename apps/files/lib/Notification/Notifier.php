@@ -97,10 +97,8 @@ class Notifier implements INotifier {
 
 	public function handleTransferownershipRequest(INotification $notification, string $languageCode): INotification {
 		$l = $this->l10nFactory->get('files', $languageCode);
-		$attemptId = $notification->getObjectId();
+		$id = $notification->getObjectId();
 		$param = $notification->getSubjectParameters();
-
-		$paramstring = base64_encode(json_encode($param));
 
 		$approveAction = $notification->createAction()
 			->setParsedLabel($l->t('Accept'))
@@ -109,7 +107,7 @@ class Notifier implements INotifier {
 				$this->urlGenerator->getAbsoluteURL(
 					$this->urlGenerator->linkTo(
 						'',
-						'ocs/v2.php/apps/files/api/v1/transferownership/' . $paramstring
+						'ocs/v2.php/apps/files/api/v1/transferownership/' . $id
 					)
 				),
 				'POST'
@@ -122,7 +120,7 @@ class Notifier implements INotifier {
 				$this->urlGenerator->getAbsoluteURL(
 					$this->urlGenerator->linkTo(
 						'',
-						'ocs/v2.php/apps/files/api/v1/transferownership/' . $paramstring
+						'ocs/v2.php/apps/files/api/v1/transferownership/' . $id
 					)
 				),
 				'DELETE'
