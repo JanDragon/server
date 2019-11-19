@@ -45,4 +45,5 @@ return array(
     'OCA\\Files\\Notification\\Notifier' => $baseDir . '/../lib/Notification/Notifier.php',
     'OCA\\Files\\Service\\OwnershipTransferService' => $baseDir . '/../lib/Service/OwnershipTransferService.php',
     'OCA\\Files\\Service\\TagService' => $baseDir . '/../lib/Service/TagService.php',
+    'OCA\\Files\\Settings\\PersonalSettings' => $baseDir . '/../lib/Settings/PersonalSettings.php',
 );

@@ -43,8 +43,11 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IContainer;
 
 class Application extends App {
+
+	public const APP_ID = 'files';
+
 	public function __construct(array $urlParams=array()) {
-		parent::__construct('files', $urlParams);
+		parent::__construct(self::APP_ID, $urlParams);
 		$container = $this->getContainer();
 		$server = $container->getServer();
 
@@ -72,7 +75,7 @@ class Application extends App {
 			return new TagService(
 				$c->query('ServerContainer')->getUserSession(),
 				$c->query('ServerContainer')->getActivityManager(),
-				$c->query('ServerContainer')->getTagManager()->load('files'),
+				$c->query('ServerContainer')->getTagManager()->load(self::APP_ID),
 				$homeFolder,
 				$server->getEventDispatcher()
 			);
