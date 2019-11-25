@@ -111,7 +111,7 @@ export default {
 			}
 			logger.debug('submit transfer ownership form', data)
 
-			const url = generateOcsUrl('/apps/files/transferownership')
+			const url = generateOcsUrl('/apps/files/api/v1/', 2) + 'transferownership'
 
 			axios.post(url, data)
 				.then(resp => resp.data)
