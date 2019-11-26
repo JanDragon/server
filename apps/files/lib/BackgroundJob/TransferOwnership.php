@@ -99,12 +99,13 @@ class TransferOwnership extends QueuedJob {
 				$destinationUserObject,
 				ltrim($path, '/')
 			);
+			$this->successNotification($transfer);
 		} catch (TransferOwnershipException $e) {
 			$this->failedNotication($transfer);
-			return;
 		}
 
-		$this->successNotification($transfer);
+		$this->mapper->delete($transfer);
+
 	}
 
 	private function failedNotication(Transfer $transfer): void {
