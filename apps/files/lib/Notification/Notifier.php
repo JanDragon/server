@@ -22,29 +22,6 @@ declare(strict_types=1);
  *
  */
 
-
-declare(strict_types=1);
-/**
- * @author Joas Schilling <coding@schilljs.com>
- *
- * @copyright Copyright (c) 2018, Joas Schilling <coding@schilljs.com>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- */
-
 namespace OCA\Files\Notification;
 
 use OCP\IURLGenerator;
@@ -90,6 +67,18 @@ class Notifier implements INotifier {
 
 		if ($notification->getSubject() === 'transferownershipRequest') {
 			return $this->handleTransferownershipRequest($notification, $languageCode);
+		}
+		if ($notification->getSubject() === 'transferOwnershipFailedSource') {
+			return $this->handleTransferOwnershipFailedSource($notification, $languageCode);
+		}
+		if ($notification->getSubject() === 'transferOwnershipFailedTarget') {
+			return $this->handleTransferOwnershipFailedTarget($notification, $languageCode);
+		}
+		if ($notification->getSubject() === 'transferOwnershipDoneSource') {
+			return $this->handleTransferOwnershipDoneSource($notification, $languageCode);
+		}
+		if ($notification->getSubject() === 'transferOwnershipDoneTarget') {
+			return $this->handleTransferOwnershipDoneTarget($notification, $languageCode);
 		}
 
 		throw new \InvalidArgumentException('Unhandled subject');
@@ -148,6 +137,102 @@ class Notifier implements INotifier {
 					]
 				])
 			->setParsedSubject(str_replace('{user}', $param['sourceUser'], $l->t('Incomming file transfer from {user}')));
+		return $notification;
+	}
+
+	public function handleTransferOwnershipFailedSource(INotification $notification,  string $languageCode): INotification {
+		$l = $this->l10nFactory->get('files', $languageCode);
+		$param = $notification->getSubjectParameters();
+
+		$notification->setRichSubject($l->t('File transfer failed'))
+			->setParsedMessage($l->t('File transfer failed'))
+			->setRichMessage(
+				$l->t('Your transfer of {path} to {user} failed.'),
+				[
+					'path' => [
+						'type' => 'highlight',
+						'id' => $param['tagerUser'] . '::' . $param['path'],
+						'name' => $param['path'],
+					],
+					'user' => [
+						'type' => 'user',
+						'id' => $param['targetUser'],
+						'name' => $param['targetUser'],
+					],
+				])
+			->setParsedSubject(str_replace(['{path}', '{user}'], [$param['path'], $param['targetUser']], $l->t('Your transfer of {path} to {user} failed.')));
+		return $notification;
+	}
+
+	public function handleTransferOwnershipFailedTarget(INotification $notification,  string $languageCode): INotification {
+		$l = $this->l10nFactory->get('files', $languageCode);
+		$param = $notification->getSubjectParameters();
+
+		$notification->setRichSubject($l->t('File transfer failed'))
+			->setParsedMessage($l->t('File transfer failed'))
+			->setRichMessage(
+				$l->t('The transfer of {path} from {user} failed.'),
+				[
+					'path' => [
+						'type' => 'highlight',
+						'id' => $param['sourceUser'] . '::' . $param['path'],
+						'name' => $param['path'],
+					],
+					'user' => [
+						'type' => 'user',
+						'id' => $param['sourceUser'],
+						'name' => $param['sourceUser'],
+					],
+				])
+			->setParsedSubject(str_replace(['{path}', '{user}'], [$param['path'], $param['sourceUser']], $l->t('The transfer of {path} from {user} failed.')));
+		return $notification;
+	}
+
+	public function handleTransferOwnershipDoneSource(INotification $notification,  string $languageCode): INotification {
+		$l = $this->l10nFactory->get('files', $languageCode);
+		$param = $notification->getSubjectParameters();
+
+		$notification->setRichSubject($l->t('File transfer done'))
+			->setParsedMessage($l->t('File transfer done'))
+			->setRichMessage(
+				$l->t('Your transfer of {path} to {user} has completed.'),
+				[
+					'path' => [
+						'type' => 'highlight',
+						'id' => $param['tagerUser'] . '::' . $param['path'],
+						'name' => $param['path'],
+					],
+					'user' => [
+						'type' => 'user',
+						'id' => $param['targetUser'],
+						'name' => $param['targetUser'],
+					],
+				])
+			->setParsedSubject(str_replace(['{path}', '{user}'], [$param['path'], $param['targetUser']], $l->t('Your transfer of {path} to {user} has completed.')));
+		return $notification;
+	}
+
+	public function handleTransferOwnershipDoneTarget(INotification $notification,  string $languageCode): INotification {
+		$l = $this->l10nFactory->get('files', $languageCode);
+		$param = $notification->getSubjectParameters();
+
+		$notification->setRichSubject($l->t('File transfer done'))
+			->setParsedMessage($l->t('File transfer done'))
+			->setRichMessage(
+				$l->t('The transfer of {path} from {user} has completed.'),
+				[
+					'path' => [
+						'type' => 'highlight',
+						'id' => $param['sourceUser'] . '::' . $param['path'],
+						'name' => $param['path'],
+					],
+					'user' => [
+						'type' => 'user',
+						'id' => $param['sourceUser'],
+						'name' => $param['sourceUser'],
+					],
+				])
+			->setParsedSubject(str_replace(['{path}', '{user}'], [$param['path'], $param['sourceUser']], $l->t('The transfer of {path} from {user} has completed.')));
 		return $notification;
 	}
 }

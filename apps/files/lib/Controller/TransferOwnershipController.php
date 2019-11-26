@@ -114,9 +114,7 @@ class TransferOwnershipController extends OCSController {
 		}
 
 		$this->jobList->add(TransferOwnership::class, [
-			'source-user' => $transferOwnership->getSourceUser(),
-			'destination-user' => $transferOwnership->getTargetUser(),
-			'path' => $transferOwnership->getPath(),
+			'id' => $transferOwnership->getId(),
 		]);
 
 		$notification = $this->notificationManager->createNotification();

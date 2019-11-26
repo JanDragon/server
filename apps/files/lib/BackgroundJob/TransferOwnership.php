@@ -26,20 +26,16 @@ declare(strict_types=1);
 
 namespace OCA\Files\BackgroundJob;
 
-use OC\Files\Filesystem;
-use OC\Files\View;
+use OCA\Files\Db\TransferOwnership as Transfer;
+use OCA\Files\Db\TransferOwnershipMapper;
+use OCA\Files\Exception\TransferOwnershipException;
 use OCA\Files\Service\OwnershipTransferService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\QueuedJob;
-use OCP\Encryption\IManager as EncryptionManager;
-use OCP\Files\FileInfo;
-use OCP\Files\IHomeStorage;
-use OCP\Files\Mount\IMountManager;
 use OCP\ILogger;
 use OCP\IUser;
 use OCP\IUserManager;
-use OCP\Share\IManager;
-use OCP\Share\IShare;
+use OCP\Notification\IManager as NotificationManager;
 use function ltrim;
 
 class TransferOwnership extends QueuedJob {
@@ -53,41 +49,116 @@ class TransferOwnership extends QueuedJob {
 	/** @var ILogger */
 	private $logger;
 
+	/** @var NotificationManager */
+	private $notificationManager;
+
+	/** @var TransferOwnershipMapper */
+	private $mapper;
+
 	public function __construct(ITimeFactory $timeFactory,
 								IUserManager $userManager,
 								OwnershipTransferService $transferService,
-								ILogger $logger) {
+								ILogger $logger,
+								NotificationManager $notificationManager,
+								TransferOwnershipMapper $mapper) {
 		parent::__construct($timeFactory);
 
 		$this->userManager = $userManager;
 		$this->transferService = $transferService;
 		$this->logger = $logger;
+		$this->notificationManager = $notificationManager;
+		$this->mapper = $mapper;
 	}
 
 	protected function run($argument) {
-		$sourceUser = $argument['source-user'];
-		$destinationUser = $argument['destination-user'];
-		$path = $argument['path'];
+		$id = $argument['id'];
+
+		$transfer = $this->mapper->getById($id);
+		$sourceUser = $transfer->getSourceUser();
+		$destinationUser = $transfer->getTargetUser();
+		$path = $transfer->getPath();
 		$sourceUserObject = $this->userManager->get($sourceUser);
 		$destinationUserObject = $this->userManager->get($destinationUser);
 
 		if (!$sourceUserObject instanceof IUser) {
 			$this->logger->alert('Could not transfer ownership: Unknown source user ' . $sourceUser);
-			//TODO send notification
+			$this->failedNotication($transfer);
 			return;
 		}
 
 		if (!$destinationUserObject instanceof IUser) {
 			$this->logger->alert("Unknown destination user $destinationUser");
-			//TODO send notification
+			$this->failedNotication($transfer);
 			return;
 		}
 
-		$this->transferService->transfer(
-			$sourceUserObject,
-			$destinationUserObject,
-			ltrim($path, '/')
-		);
+		try {
+			$this->transferService->transfer(
+				$sourceUserObject,
+				$destinationUserObject,
+				ltrim($path, '/')
+			);
+		} catch (TransferOwnershipException $e) {
+			$this->failedNotication($transfer);
+			return;
+		}
+
+		$this->successNotification($transfer);
 	}
 
+	private function failedNotication(Transfer $transfer): void {
+		// Send notification to source user
+		$notification = $this->notificationManager->createNotification();
+		$notification->setUser($transfer->getSourceUser())
+			->setApp('files')
+			->setDateTime($this->time->getDateTime())
+			->setSubject('transferOwnershipFailedSource', [
+				'sourceUser' => $transfer->getSourceUser(),
+				'targetUser' => $transfer->getTargetUser(),
+				'path' => $transfer->getPath(),
+			])
+			->setObject('transfer', (string)$transfer->getId());
+		$this->notificationManager->notify($notification);
+
+		// Send notification to source user
+		$notification = $this->notificationManager->createNotification();
+		$notification->setUser($transfer->getTargetUser())
+			->setApp('files')
+			->setDateTime($this->time->getDateTime())
+			->setSubject('transferOwnershipFailedTarget', [
+				'sourceUser' => $transfer->getSourceUser(),
+				'targetUser' => $transfer->getTargetUser(),
+				'path' => $transfer->getPath(),
+			])
+			->setObject('transfer', (string)$transfer->getId());
+		$this->notificationManager->notify($notification);
+	}
+
+	private function successNotification(Transfer $transfer): void {
+		// Send notification to source user
+		$notification = $this->notificationManager->createNotification();
+		$notification->setUser($transfer->getSourceUser())
+			->setApp('files')
+			->setDateTime($this->time->getDateTime())
+			->setSubject('transferOwnershipDoneSource', [
+				'sourceUser' => $transfer->getSourceUser(),
+				'targetUser' => $transfer->getTargetUser(),
+				'path' => $transfer->getPath(),
+			])
+			->setObject('transfer', (string)$transfer->getId());
+		$this->notificationManager->notify($notification);
+
+		// Send notification to source user
+		$notification = $this->notificationManager->createNotification();
+		$notification->setUser($transfer->getTargetUser())
+			->setApp('files')
+			->setDateTime($this->time->getDateTime())
+			->setSubject('transferOwnershipDoneTarget', [
+				'sourceUser' => $transfer->getSourceUser(),
+				'targetUser' => $transfer->getTargetUser(),
+				'path' => $transfer->getPath(),
+			])
+			->setObject('transfer', (string)$transfer->getId());
+		$this->notificationManager->notify($notification);
+	}
 }
