@@ -144,8 +144,35 @@ class TransferOwnershipController extends OCSController {
 	}
 
 	public function reject(string $id): DataResponse {
-		// TODO: Mark notification as done
-		// TODO: Send notification to initiator of rejection
+		$transferId = (int)$id;
+
+		try {
+			$transferOwnership = $this->mapper->getById($transferId);
+		} catch (DoesNotExistException $e) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
+
+		if ($transferOwnership->getTargetUser() !== $this->userId) {
+			return new DataResponse([], Http::STATUS_FORBIDDEN);
+		}
+
+		$notification = $this->notificationManager->createNotification();
+		$notification->setApp('files')
+			->setObject('transfer', $id);
+		$this->notificationManager->markProcessed($notification);
+
+		$notification = $this->notificationManager->createNotification();
+		$notification->setUser($transferOwnership->getSourceUser())
+			->setApp($this->appName)
+			->setDateTime($this->timeFactory->getDateTime())
+			->setSubject('transferownershipRequestDenied', [
+				'sourceUser' => $transferOwnership->getSourceUser(),
+				'targetUser' => $transferOwnership->getTargetUser(),
+				'path' => $transferOwnership->getPath()
+			])
+			->setObject('transfer', (string)$transferOwnership->getId());
+
+		return new DataResponse([], Http::STATUS_OK);
 	}
 
 }
