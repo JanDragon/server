@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Files\BackgroundJob;
 
+use OCA\Files\AppInfo\Application;
 use OCA\Files\Db\TransferOwnership as Transfer;
 use OCA\Files\Db\TransferOwnershipMapper;
 use OCA\Files\Exception\TransferOwnershipException;
@@ -110,7 +111,7 @@ class TransferOwnership extends QueuedJob {
 		// Send notification to source user
 		$notification = $this->notificationManager->createNotification();
 		$notification->setUser($transfer->getSourceUser())
-			->setApp('files')
+			->setApp(Application::APP_ID)
 			->setDateTime($this->time->getDateTime())
 			->setSubject('transferOwnershipFailedSource', [
 				'sourceUser' => $transfer->getSourceUser(),
@@ -123,7 +124,7 @@ class TransferOwnership extends QueuedJob {
 		// Send notification to source user
 		$notification = $this->notificationManager->createNotification();
 		$notification->setUser($transfer->getTargetUser())
-			->setApp('files')
+			->setApp(Application::APP_ID)
 			->setDateTime($this->time->getDateTime())
 			->setSubject('transferOwnershipFailedTarget', [
 				'sourceUser' => $transfer->getSourceUser(),
@@ -138,7 +139,7 @@ class TransferOwnership extends QueuedJob {
 		// Send notification to source user
 		$notification = $this->notificationManager->createNotification();
 		$notification->setUser($transfer->getSourceUser())
-			->setApp('files')
+			->setApp(Application::APP_ID)
 			->setDateTime($this->time->getDateTime())
 			->setSubject('transferOwnershipDoneSource', [
 				'sourceUser' => $transfer->getSourceUser(),
@@ -151,7 +152,7 @@ class TransferOwnership extends QueuedJob {
 		// Send notification to source user
 		$notification = $this->notificationManager->createNotification();
 		$notification->setUser($transfer->getTargetUser())
-			->setApp('files')
+			->setApp(Application::APP_ID)
 			->setDateTime($this->time->getDateTime())
 			->setSubject('transferOwnershipDoneTarget', [
 				'sourceUser' => $transfer->getSourceUser(),
