@@ -172,6 +172,8 @@ class TransferOwnershipController extends OCSController {
 			])
 			->setObject('transfer', (string)$transferOwnership->getId());
 
+		$this->mapper->delete($transferOwnership);
+
 		return new DataResponse([], Http::STATUS_OK);
 	}
 
