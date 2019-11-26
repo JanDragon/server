@@ -32,7 +32,9 @@ use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
+use OCP\Files\IRootFolder;
 use OCP\IRequest;
+use OCP\IUserManager;
 use OCP\Notification\IManager as NotificationManager;
 
 class TransferOwnershipController extends OCSController {
@@ -47,6 +49,10 @@ class TransferOwnershipController extends OCSController {
 	private $jobList;
 	/** @var TransferOwnershipMapper */
 	private $mapper;
+	/** @var IUserManager */
+	private $userManager;
+	/** @var IRootFolder */
+	private $rootFolder;
 
 	public function __construct(string $appName,
 								IRequest $request,
@@ -54,7 +60,9 @@ class TransferOwnershipController extends OCSController {
 								NotificationManager $notificationManager,
 								ITimeFactory $timeFactory,
 								IJobList $jobList,
-								TransferOwnershipMapper $mapper) {
+								TransferOwnershipMapper $mapper,
+								IUserManager $userManager,
+								IRootFolder $rootFolder) {
 		parent::__construct($appName, $request);
 
 		$this->userId = $userId;
@@ -62,18 +70,28 @@ class TransferOwnershipController extends OCSController {
 		$this->timeFactory = $timeFactory;
 		$this->jobList = $jobList;
 		$this->mapper = $mapper;
+		$this->userManager = $userManager;
+		$this->rootFolder = $rootFolder;
 	}
 
 
 	/**
 	 * @NoAdminRequired
-	 *
-	 * TODO: more checks
 	 */
 	public function transfer(string $recipient, string $path): DataResponse {
+		$recipientUser = $this->userManager->get($recipient);
 
-		//TODO: verify if recipient exists
-		//TODO: verify if path exists
+		if ($recipientUser === null) {
+			return new DataResponse([], Http::STATUS_BAD_REQUEST);
+		}
+
+		$userRoot = $this->rootFolder->getUserFolder($this->userId);
+
+		try {
+			$node = $this->rootFolder->get($path);
+		} catch (\Exception $e) {
+			return new DataResponse([], Http::STATUS_BAD_REQUEST);
+		}
 
 		$transferOwnership = new \OCA\Files\Db\TransferOwnership();
 		$transferOwnership->setSourceUser($this->userId);
@@ -83,7 +101,7 @@ class TransferOwnershipController extends OCSController {
 
 		$notification = $this->notificationManager->createNotification();
 		$notification->setUser($recipient)
-			->setApp('files')
+			->setApp($this->appName)
 			->setDateTime($this->timeFactory->getDateTime())
 			->setSubject('transferownershipRequest', [
 				'sourceUser' => $this->userId,
